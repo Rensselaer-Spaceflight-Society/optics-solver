@@ -27,11 +27,7 @@ impl Vec3 {
         self.x * o.x + self.y * o.y + self.z * o.z
     }
     pub fn cross(self, o: Vec3) -> Vec3 {
-        Vec3::new(
-            self.y * o.z - self.z * o.y,
-            self.z * o.x - self.x * o.z,
-            self.x * o.y - self.y * o.x,
-        )
+        Vec3::new(self.y * o.z - self.z * o.y, self.z * o.x - self.x * o.z, self.x * o.y - self.y * o.x)
     }
     pub fn norm(self) -> f64 {
         self.dot(self).sqrt()
@@ -205,10 +201,7 @@ pub fn interp(t: f64, xs: &[f64], ys: &[f64]) -> f64 {
 
 /// numpy.trapezoid for samples `y` at abscissae `x`.
 pub fn trapezoid(y: &[f64], x: &[f64]) -> f64 {
-    y.windows(2)
-        .zip(x.windows(2))
-        .map(|(yy, xx)| 0.5 * (yy[0] + yy[1]) * (xx[1] - xx[0]))
-        .sum()
+    y.windows(2).zip(x.windows(2)).map(|(yy, xx)| 0.5 * (yy[0] + yy[1]) * (xx[1] - xx[0])).sum()
 }
 
 /// Gauss-Legendre nodes and weights on [-1, 1].
@@ -250,8 +243,7 @@ pub fn integrate_clustered(a: f64, b: f64, gl: &(Vec<f64>, Vec<f64>), f: impl Fn
         return 0.0;
     }
     let half = 0.5 * (b - a);
-    gl.0
-        .iter()
+    gl.0.iter()
         .zip(&gl.1)
         .map(|(&t, &w)| {
             // t in [-1,1] -> s = sin(pi t / 2) in [-1, 1]
@@ -324,8 +316,7 @@ pub fn ln_factorial(n: u64) -> f64 {
     }
     // Stirling series, accurate to ~1e-15 relative for n >= 64.
     let x = n as f64;
-    x * x.ln() - x + 0.5 * (TAU * x).ln() + 1.0 / (12.0 * x) - 1.0 / (360.0 * x.powi(3))
-        + 1.0 / (1260.0 * x.powi(5))
+    x * x.ln() - x + 0.5 * (TAU * x).ln() + 1.0 / (12.0 * x) - 1.0 / (360.0 * x.powi(3)) + 1.0 / (1260.0 * x.powi(5))
 }
 
 /// Linear spacing like numpy.linspace (inclusive).

@@ -125,6 +125,17 @@ pub fn brdf_curve(model: &SampleModel, incidence_deg: f64) -> BrdfCurve {
     BrdfCurve { view_deg: view, parts, albedo: model.albedo(t) }
 }
 
+/// Irradiance map whose extent shows the whole coupon and the whole spot.
+pub fn spot_map_covering_coupon(beam: &BeamResult, bench: &BenchSettings) -> SpotMap {
+    let auto = spot_map(beam, 8, None).half_extent_mm;
+    let c = &bench.coupon;
+    let coupon_half = match c.shape {
+        super::bench::CouponShape::Rectangle => 0.5 * c.length_mm.max(c.width_mm),
+        super::bench::CouponShape::Disk => 0.5 * c.length_mm,
+    };
+    spot_map(beam, 128, Some(auto.max(coupon_half * 1.1)))
+}
+
 /// Run everything. `cached_beam` lets the GUI skip the trace when only the
 /// sample, detector or scan changed.
 pub fn simulate(settings: &SimSettings, cached_beam: Option<Arc<BeamResult>>) -> Result<SimResult, String> {
@@ -139,11 +150,15 @@ pub fn simulate(settings: &SimSettings, cached_beam: Option<Arc<BeamResult>>) ->
     let mean_wl = t.weighted_mean(|w| w);
     let reach = (settings.bench.source_distance_mm * 1.6).max(40.0);
     let profile = beam_profile(&settings.bench, &beam, mean_wl, reach);
-    let spot = spot_map(&beam, 96, None);
+    let spot = spot_map_covering_coupon(&beam, &settings.bench);
     let model = SampleModel::new(&settings.sample);
     let scan_settings = ScanSettings { scan_rays, ..settings.scan.clone() };
     let scan = compute_scan(&settings.bench, &beam, &model, &settings.detector, &scan_settings);
-    let mirror = SampleModel::new(&SampleSettings { kind: SampleKind::Mirror, mirror_reflectance: 1.0, ..settings.sample.clone() });
+    let mirror = SampleModel::new(&SampleSettings {
+        kind: SampleKind::Mirror,
+        mirror_reflectance: 1.0,
+        ..settings.sample.clone()
+    });
     let instrument = compute_scan(&settings.bench, &beam, &mirror, &settings.detector, &scan_settings);
     let brdf = brdf_curve(&model, settings.bench.incidence_deg);
     let warnings = warnings(settings, &t, &beam, &spot, &scan);
@@ -319,14 +334,20 @@ pub fn summarize_effects(rows: &[StudyRow]) -> Vec<EffectSummary> {
             }
             let mut content = Vec::new();
             for f in [Finish::AsCast, Finish::Abraded] {
-                let v: Vec<f64> = sel.iter().filter(|r| r.finish == f && r.regolith_mass_percent > 0.0).map(|r| lr(r)).collect();
+                let v: Vec<f64> =
+                    sel.iter().filter(|r| r.finish == f && r.regolith_mass_percent > 0.0).map(|r| lr(r)).collect();
                 if v.len() >= 2 {
                     let (lo, hi) = v.iter().fold((f64::MAX, f64::MIN), |(a, b), &x| (a.min(x), b.max(x)));
                     content.push(hi - lo);
                 }
             }
             let mean = |v: &[f64]| if v.is_empty() { 0.0 } else { v.iter().sum::<f64>() / v.len() as f64 };
-            EffectSummary { incidence_deg: inc, simulant: Some(sim), finish_effect: mean(&finish), content_effect: mean(&content) }
+            EffectSummary {
+                incidence_deg: inc,
+                simulant: Some(sim),
+                finish_effect: mean(&finish),
+                content_effect: mean(&content),
+            }
         })
         .collect()
 }
@@ -355,8 +376,14 @@ mod tests {
         let rows = run_study(&s, &[Simulant::Lhs1], &[0.0, 30.0], &[30.0, 60.0], &|_| {}).unwrap();
         assert_eq!(rows.len(), 2 * 2 * 2);
         // Abrasion lowers the near/off ratio for the composite.
-        let cast = rows.iter().find(|r| r.regolith_mass_percent == 30.0 && r.finish == Finish::AsCast && r.incidence_deg == 30.0).unwrap();
-        let abr = rows.iter().find(|r| r.regolith_mass_percent == 30.0 && r.finish == Finish::Abraded && r.incidence_deg == 30.0).unwrap();
+        let cast = rows
+            .iter()
+            .find(|r| r.regolith_mass_percent == 30.0 && r.finish == Finish::AsCast && r.incidence_deg == 30.0)
+            .unwrap();
+        let abr = rows
+            .iter()
+            .find(|r| r.regolith_mass_percent == 30.0 && r.finish == Finish::Abraded && r.incidence_deg == 30.0)
+            .unwrap();
         assert!(abr.ratio < cast.ratio);
         let eff = summarize_effects(&rows);
         assert_eq!(eff.len(), 2);

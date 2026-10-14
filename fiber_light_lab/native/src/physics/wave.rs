@@ -81,8 +81,16 @@ pub fn local_spread(distance_mm: f64, output_na: f64) -> f64 {
     output_na.min(CORE_RADIUS_MM / CORE_RADIUS_MM.hypot(distance_mm))
 }
 
-pub fn interference(w: &WaveSettings, cable_length_m: f64, distance_mm: f64, output_na: f64) -> WavePatch {
-    let spread = local_spread(distance_mm, output_na);
+/// `spread_override`: local angular spread (sin) when optics sit between the
+/// fiber and the sample (e.g. from the traced beam after the LB1092).
+pub fn interference(
+    w: &WaveSettings,
+    cable_length_m: f64,
+    distance_mm: f64,
+    output_na: f64,
+    spread_override: Option<f64>,
+) -> WavePatch {
+    let spread = spread_override.unwrap_or_else(|| local_spread(distance_mm, output_na)).clamp(1e-4, 0.99);
     let lam = w.wavelength_nm / 1000.0;
     let width = 12.0 * lam / spread;
     let axis = linspace(-width / 2.0, width / 2.0, GRID);
@@ -94,8 +102,8 @@ pub fn interference(w: &WaveSettings, cable_length_m: f64, distance_mm: f64, out
     let mut sx = [0.0; COMPONENTS];
     let mut sy = [0.0; COMPONENTS];
     let mut radii = [0.0; COMPONENTS];
-    for j in 0..COMPONENTS {
-        radii[j] = spread * rng.uniform().sqrt();
+    for r in radii.iter_mut() {
+        *r = spread * rng.uniform().sqrt();
     }
     for j in 0..COMPONENTS {
         let a = TAU * rng.uniform();
@@ -194,15 +202,15 @@ mod tests {
     #[test]
     fn interference_statistics() {
         let mut w = WaveSettings { mode: WaveMode::Coherent, ..Default::default() };
-        let p = interference(&w, 0.254, 63.5, 0.5);
+        let p = interference(&w, 0.254, 63.5, 0.5, None);
         assert!(p.intensity.iter().all(|&v| v >= 0.0));
         assert!(p.contrast > 0.7, "{}", p.contrast);
         w.mode = WaveMode::Ensemble;
         w.averages = 64;
-        let avg = interference(&w, 0.254, 63.5, 0.5);
+        let avg = interference(&w, 0.254, 63.5, 0.5, None);
         assert!(avg.contrast < 0.25, "{}", avg.contrast);
         w.mode = WaveMode::Halogen;
-        let h = interference(&w, 0.254, 63.5, 0.5);
+        let h = interference(&w, 0.254, 63.5, 0.5, None);
         assert!(h.intensity.iter().all(|&v| v == 1.0));
         // Resolution: > 4 samples per shortest fringe (2·spread/λ).
         let spread = local_spread(63.5, 0.5);

@@ -226,7 +226,9 @@ impl SpectrumSampler {
         let mut cdf = vec![0.0; t.wavelength_nm.len()];
         for i in 1..cdf.len() {
             cdf[i] = cdf[i - 1]
-                + 0.5 * (t.output_spectrum[i] + t.output_spectrum[i - 1]) * (t.wavelength_nm[i] - t.wavelength_nm[i - 1]);
+                + 0.5
+                    * (t.output_spectrum[i] + t.output_spectrum[i - 1])
+                    * (t.wavelength_nm[i] - t.wavelength_nm[i - 1]);
         }
         let total = *cdf.last().unwrap();
         if total > 0.0 {
@@ -294,7 +296,12 @@ pub fn trace_beam(bench: &BenchSettings, fiber: &FiberSettings, t: &Transport, n
                 pts.push(to_world(o_local));
             }
             let path = |pts: Vec<Vec3>, power: f64, reached: bool| {
-                keep.then(|| RayPath { points: pts, wavelength_nm: wl as f32, power_mw: power as f32, reached_sample: reached })
+                keep.then_some(RayPath {
+                    points: pts,
+                    wavelength_nm: wl as f32,
+                    power_mw: power as f32,
+                    reached_sample: reached,
+                })
             };
             let (origin, dir, power) = if bench.use_lens {
                 match bench.lens.trace(o_local, d_local, wl, bench.fiber_to_lens_mm) {
@@ -466,7 +473,8 @@ pub fn beam_profile(bench: &BenchSettings, beam: &BeamResult, wavelength_nm: f64
         prof.d90_mm.push(2.0 * r90);
     }
     // Angular distribution relative to the axis.
-    let mut ang: Vec<(f64, f64)> = rays.iter().map(|&(_, d, w)| (d.dot(axis).clamp(-1.0, 1.0).acos().to_degrees(), w)).collect();
+    let mut ang: Vec<(f64, f64)> =
+        rays.iter().map(|&(_, d, w)| (d.dot(axis).clamp(-1.0, 1.0).acos().to_degrees(), w)).collect();
     let total: f64 = ang.iter().map(|a| a.1).sum();
     ang.sort_by(|a, b| a.0.total_cmp(&b.0));
     let mut acc = 0.0;
@@ -578,6 +586,7 @@ pub fn spot_map(beam: &BeamResult, n: usize, half_extent_mm: Option<f64>) -> Spo
 mod tests {
     use super::*;
     use crate::physics::fiber::{BareFootprint, transport};
+    use crate::physics::lens::LensSpec;
 
     #[test]
     fn bare_fiber_trace_matches_analytic_footprint() {
@@ -601,15 +610,14 @@ mod tests {
             let inside: f64 =
                 beam.hits.iter().filter(|h| (h.u as f64).hypot(h.v as f64) <= rr).map(|h| h.power_mw).sum();
             let gl = crate::physics::math::gauss_legendre(400);
-            let analytic: f64 = gl
-                .0
-                .iter()
-                .zip(&gl.1)
-                .map(|(&x, &w)| {
-                    let r = 0.5 * rr * (x + 1.0);
-                    0.5 * rr * w * model.irradiance(r) * TAU * r
-                })
-                .sum();
+            let analytic: f64 =
+                gl.0.iter()
+                    .zip(&gl.1)
+                    .map(|(&x, &w)| {
+                        let r = 0.5 * rr * (x + 1.0);
+                        0.5 * rr * w * model.irradiance(r) * TAU * r
+                    })
+                    .sum();
             assert!((inside / analytic - 1.0).abs() < 2e-3, "r={rr}: {inside} vs {analytic}");
         }
     }
@@ -632,6 +640,24 @@ mod tests {
     }
 
     #[test]
+    fn lens_capture_matches_aperture_geometry() {
+        // On-axis point at the collimating distance: the lens rim (r = 6.35 mm,
+        // at the front-surface sag) bounds the accepted cone, uniform in sin²θ.
+        let fiber = FiberSettings::default();
+        let t = transport(&fiber);
+        let bench = BenchSettings::default();
+        let a = 0.5 * bench.lens.diameter_mm;
+        let z = bench.fiber_to_lens_mm + LensSpec::sag(a, bench.lens.r1_mm);
+        let sin_max = a / a.hypot(z);
+        let expect = (sin_max / 0.5).powi(2);
+        let beam = trace_beam(&bench, &fiber, &t, 200_000, 5);
+        let b = beam.budget;
+        let captured = (b.past_lens_mw + b.lens_reflection_mw + b.lens_edge_mw + b.lens_tir_mw) / b.fiber_output_mw;
+        // The 0.98 mm core blurs the rim slightly; Fresnel weighting favors small angles.
+        assert!((captured / expect - 1.0).abs() < 0.03, "{captured} vs {expect}");
+    }
+
+    #[test]
     fn small_launch_na_divergence_equals_core_over_f() {
         // Paraxial check of the PDF statement: 1 mm core, 15 mm lens -> ~3.8°.
         let fiber = FiberSettings { launch_na: 0.05, ..FiberSettings::default() };
@@ -642,6 +668,10 @@ mod tests {
         // Uniform core: the full angle is 2a/f; 90 % of a uniform disk sits
         // within sqrt(0.9) of the edge radius.
         let full = (2.0 * CORE_RADIUS_MM / bench.lens.efl(587.6)).to_degrees();
-        assert!((prof.divergence90_full_deg / (full * 0.9f64.sqrt()) - 1.0).abs() < 0.06, "{} vs {full}", prof.divergence90_full_deg);
+        assert!(
+            (prof.divergence90_full_deg / (full * 0.9f64.sqrt()) - 1.0).abs() < 0.06,
+            "{} vs {full}",
+            prof.divergence90_full_deg
+        );
     }
 }

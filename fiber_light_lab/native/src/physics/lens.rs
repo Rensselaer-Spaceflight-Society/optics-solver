@@ -281,7 +281,13 @@ fn intersect_cap(o: Vec3, d: Vec3, vertex_z: f64, radius: f64) -> Option<(Vec3, 
 impl LensSpec {
     /// Trace one ray (lens-local coordinates, optical axis +z, front vertex at
     /// `front_vertex_z`) through both surfaces.
-    pub fn trace(&self, origin: Vec3, dir: Vec3, wavelength_nm: f64, front_vertex_z: f64) -> Result<LensTrace, LensLoss> {
+    pub fn trace(
+        &self,
+        origin: Vec3,
+        dir: Vec3,
+        wavelength_nm: f64,
+        front_vertex_z: f64,
+    ) -> Result<LensTrace, LensLoss> {
         let n_glass = self.index(wavelength_nm);
         let half_ap = 0.5 * self.diameter_mm.min(self.mount_aperture_mm);
         let half_d = 0.5 * self.diameter_mm;

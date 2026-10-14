@@ -1,0 +1,108 @@
+name: Fiber Light Lab
+
+# Tests every change to the native simulator. Pushing a tag such as
+# fiber-light-lab-v0.2.0 also builds FiberLightLab.exe and publishes a release.
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'fiber_light_lab/native/**'
+      - 'fiber_light_lab/data/**'
+      - '.github/workflows/fiber-light-lab-release.yml'
+    tags: ['fiber-light-lab-v*']
+  pull_request:
+    paths:
+      - 'fiber_light_lab/native/**'
+      - 'fiber_light_lab/data/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: fiber_light_lab/native
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: fiber_light_lab/native
+      - name: Unit, parity and pipeline tests
+        run: cargo test --locked
+
+  windows:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: fiber_light_lab/native
+      - name: Build
+        run: cargo build --release --locked
+      - name: Smoke-test the command-line runner
+        run: target/release/fiberlab-cli.exe --quality draft --out smoke
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item target/release/FiberLightLab.exe dist/
+          Copy-Item target/release/fiberlab-cli.exe dist/
+          Copy-Item README.md, MODEL_NATIVE.md dist/
+          Compress-Archive -Path dist/* -DestinationPath FiberLightLab-windows-x64.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FiberLightLab-windows-x64
+          path: |
+            fiber_light_lab/native/dist/FiberLightLab.exe
+            fiber_light_lab/native/FiberLightLab-windows-x64.zip
+
+  linux:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: fiber_light_lab/native
+      - name: Build
+        run: cargo build --release --locked
+      - name: Package
+        run: |
+          mkdir -p dist/FiberLightLab
+          cp target/release/FiberLightLab target/release/fiberlab-cli README.md MODEL_NATIVE.md dist/FiberLightLab/
+          tar -C dist -czf FiberLightLab-linux-x64.tar.gz FiberLightLab
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FiberLightLab-linux-x64
+          path: fiber_light_lab/native/FiberLightLab-linux-x64.tar.gz
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/fiber-light-lab-v')
+    needs: [windows, linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Fiber Light Lab ${{ github.ref_name }}
+          body_path: fiber_light_lab/native/RELEASE_NOTES.md
+          files: |
+            artifacts/dist/FiberLightLab.exe
+            artifacts/FiberLightLab-windows-x64.zip
+            artifacts/FiberLightLab-linux-x64.tar.gz
+          fail_on_unmatched_files: true

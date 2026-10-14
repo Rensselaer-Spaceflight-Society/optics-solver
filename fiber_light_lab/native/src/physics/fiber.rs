@@ -6,7 +6,7 @@
 //! Units: power mW, spectra mW/nm, lengths mm (geometry) or m (cable).
 
 use super::data;
-use super::math::{PI, Curve, gauss_legendre, integrate_clustered, ln_factorial, trapezoid};
+use super::math::{Curve, PI, gauss_legendre, integrate_clustered, ln_factorial, trapezoid};
 use serde::{Deserialize, Serialize};
 
 /// GH-4001-P nominal core radius (980 µm diameter), Mitsubishi data sheet p.1.
@@ -415,9 +415,8 @@ mod tests {
         for &(z, na) in &[(0.5, 0.5), (8.0, 0.5), (63.5, 0.5), (63.5, 0.2)] {
             let f = BareFootprint::new(z, na, 2.0);
             let (r, e) = f.profile(1500);
-            let p: f64 = (1..r.len())
-                .map(|i| 0.5 * (e[i] * r[i] + e[i - 1] * r[i - 1]) * 2.0 * PI * (r[i] - r[i - 1]))
-                .sum();
+            let p: f64 =
+                (1..r.len()).map(|i| 0.5 * (e[i] * r[i] + e[i - 1] * r[i - 1]) * 2.0 * PI * (r[i] - r[i - 1])).sum();
             assert!((p / 2.0 - 1.0).abs() < 2e-3, "z={z} na={na} p={p}");
         }
     }

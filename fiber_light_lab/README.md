@@ -1,4 +1,17 @@
-# Fiber optical simulation — desktop Python version
+# Fiber optical simulation
+
+> **New: native simulator.** [`native/`](native/README.md) contains **Fiber Light Lab**, a
+> single-file desktop program (`FiberLightLab.exe`, no Python needed) that ray-traces the
+> full goniometer bench: MI-152 → GH4001 → Thorlabs LB1092 lens → regolith-epoxy coupon →
+> detector. It reproduces this Python model's fiber transport exactly and adds the lens, the
+> mirror/instrument check, coupon reflectance models and the experiment matrix from the
+> research plan. Download it from the repository's Releases, or build it with
+> `cargo build --release` in `native/`. Equations and validation are in
+> [native/MODEL_NATIVE.md](native/MODEL_NATIVE.md).
+
+The Python versions below remain as the reference implementation.
+
+## Desktop Python version
 
 Run [fiber_simulation.py](fiber_simulation.py) for the **PySide6 desktop application
 with OpenGL 3D views and Matplotlib charts**. It opens a normal light-mode window;

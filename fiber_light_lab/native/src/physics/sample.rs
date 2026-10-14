@@ -101,11 +101,27 @@ impl HapkeParams {
     /// Curtis et al. 2024 (MAPS 59, doi:10.1111/maps.14266) Apollo 16 68810
     /// "smooth" fit: highland analog for LHS-1. c from the hockey stick.
     pub fn apollo16_smooth() -> Self {
-        HapkeParams { w: 0.388, b: 0.063, c: hockey_stick_c(0.063), b_s0: 1.0, h_s: 0.221, theta_bar_deg: 14.27, filling_factor: 0.40 }
+        HapkeParams {
+            w: 0.388,
+            b: 0.063,
+            c: hockey_stick_c(0.063),
+            b_s0: 1.0,
+            h_s: 0.221,
+            theta_bar_deg: 14.27,
+            filling_factor: 0.40,
+        }
     }
     /// Curtis et al. 2024 Apollo 11 10084 "smooth" fit: mare analog for LMS-1.
     pub fn apollo11_smooth() -> Self {
-        HapkeParams { w: 0.281, b: 0.238, c: hockey_stick_c(0.238), b_s0: 1.0, h_s: 0.032, theta_bar_deg: 13.80, filling_factor: 0.60 }
+        HapkeParams {
+            w: 0.281,
+            b: 0.238,
+            c: hockey_stick_c(0.238),
+            b_s0: 1.0,
+            h_s: 0.032,
+            theta_bar_deg: 13.80,
+            filling_factor: 0.60,
+        }
     }
 }
 
@@ -244,7 +260,7 @@ impl CompositeSettings {
             return Err("Hapke w, b in [0,1), c in [-1,1].".into());
         }
         if h.h_s <= 0.0 || !(0.0..0.75).contains(&h.filling_factor) || !(0.0..60.0).contains(&h.theta_bar_deg) {
-            return Err("Hapke h > 0, filling factor < 0.75, θ̄ < 60°.".into());
+            return Err("Hapke h > 0, filling factor < 0.75, theta-bar < 60°.".into());
         }
         if !(0.0..=45.0).contains(&self.slope_as_cast_deg) || !(0.0..=45.0).contains(&self.slope_abraded_deg) {
             return Err("RMS slopes must be within 0-45°.".into());
@@ -288,10 +304,13 @@ pub fn dielectric_fresnel(n: f64, cos_i: f64, from_inside: bool) -> f64 {
 pub fn hemispherical_fresnel(n: f64) -> f64 {
     let gl = gauss_legendre(64);
     // ∫0^1 F(μ) 2μ dμ
-    gl.0.iter().zip(&gl.1).map(|(&x, &w)| {
-        let mu = 0.5 * (x + 1.0);
-        0.5 * w * dielectric_fresnel(n, mu, false) * 2.0 * mu
-    }).sum()
+    gl.0.iter()
+        .zip(&gl.1)
+        .map(|(&x, &w)| {
+            let mu = 0.5 * (x + 1.0);
+            0.5 * w * dielectric_fresnel(n, mu, false) * 2.0 * mu
+        })
+        .sum()
 }
 
 fn beckmann_d(cos_h: f64, alpha: f64) -> f64 {
@@ -404,7 +423,8 @@ pub fn hapke_brdf(p: &HapkeParams, wi: Vec3, wo: Vec3) -> f64 {
     let (po_x, po_y) = (wo.x, wo.y);
     let ni = pi_x.hypot(pi_y);
     let no = po_x.hypot(po_y);
-    let psi = if ni < 1e-12 || no < 1e-12 { 0.0 } else { ((pi_x * po_x + pi_y * po_y) / (ni * no)).clamp(-1.0, 1.0).acos() };
+    let psi =
+        if ni < 1e-12 || no < 1e-12 { 0.0 } else { ((pi_x * po_x + pi_y * po_y) / (ni * no)).clamp(-1.0, 1.0).acos() };
     let (mu0e, mue, s) = hapke_roughness(mu0, mu, psi, p.theta_bar_deg.to_radians());
     let k = hapke_porosity_k(p.filling_factor);
     let b = p.b;
@@ -458,7 +478,8 @@ impl SampleModel {
         let rho_e = hemispherical_fresnel(n);
         let sigma_front = c.rms_slope_deg().to_radians().tan();
         let sigma_back = c.back_face_slope_deg.to_radians().tan();
-        let sigma_eq = ((std::f64::consts::FRAC_1_SQRT_2 * (n - 1.0) * sigma_front).powi(2) + (n * sigma_back).powi(2)).sqrt();
+        let sigma_eq =
+            ((std::f64::consts::FRAC_1_SQRT_2 * (n - 1.0) * sigma_front).powi(2) + (n * sigma_back).powi(2)).sqrt();
         SampleModel {
             kind: s.kind,
             mirror_reflectance: s.mirror_reflectance,
@@ -502,7 +523,9 @@ impl SampleModel {
         }
         match self.kind {
             SampleKind::Mirror => BrdfParts::default(),
-            SampleKind::LambertianReference => BrdfParts { body: self.lambertian_reflectance / PI, ..Default::default() },
+            SampleKind::LambertianReference => {
+                BrdfParts { body: self.lambertian_reflectance / PI, ..Default::default() }
+            }
             SampleKind::Composite => {
                 let n = self.n;
                 let resin = 1.0 - self.exposed;

@@ -184,7 +184,14 @@ pub struct ScanSettings {
 
 impl Default for ScanSettings {
     fn default() -> Self {
-        ScanSettings { start_deg: -85.0, stop_deg: 85.0, step_deg: 1.0, near_halfwidth_deg: 5.0, off_min_deg: 20.0, scan_rays: 4096 }
+        ScanSettings {
+            start_deg: -85.0,
+            stop_deg: 85.0,
+            step_deg: 1.0,
+            near_halfwidth_deg: 5.0,
+            off_min_deg: 20.0,
+            scan_rays: 4096,
+        }
     }
 }
 
@@ -468,7 +475,8 @@ mod tests {
         let (bench, beam) = setup(true, 30.0);
         let model = SampleModel::new(&SampleSettings { kind: SampleKind::LambertianReference, ..Default::default() });
         let det = DetectorSettings::default();
-        let scan = ScanSettings { start_deg: -60.0, stop_deg: 70.0, step_deg: 10.0, scan_rays: 8000, ..Default::default() };
+        let scan =
+            ScanSettings { start_deg: -60.0, stop_deg: 70.0, step_deg: 10.0, scan_rays: 8000, ..Default::default() };
         let r = compute_scan(&bench, &beam, &model, &det, &scan);
         for (i, &a) in r.angle_deg.iter().enumerate() {
             let expect = r.incident_on_coupon_mw * 0.99 / PI * a.to_radians().cos() * det.solid_angle_sr();
@@ -486,7 +494,8 @@ mod tests {
         let mut det = DetectorSettings::default();
         det.apply_preset(DetectorPreset::Custom);
         det.size_mm = 60.0;
-        let scan = ScanSettings { start_deg: 20.0, stop_deg: 40.0, step_deg: 0.5, scan_rays: 20_000, ..Default::default() };
+        let scan =
+            ScanSettings { start_deg: 20.0, stop_deg: 40.0, step_deg: 0.5, scan_rays: 20_000, ..Default::default() };
         let r = compute_scan(&bench, &beam, &model, &det, &scan);
         // The big detector sees a flat plateau centered on the specular angle.
         let at30 = r.power_mw[r.angle_deg.iter().position(|&a| a == 30.0).unwrap()];
@@ -501,7 +510,8 @@ mod tests {
         let (bench, beam) = setup(true, 30.0);
         let model = SampleModel::new(&SampleSettings { kind: SampleKind::Mirror, ..Default::default() });
         let det = DetectorSettings::default();
-        let scan = ScanSettings { start_deg: 10.0, stop_deg: 50.0, step_deg: 0.25, scan_rays: 40_000, ..Default::default() };
+        let scan =
+            ScanSettings { start_deg: 10.0, stop_deg: 50.0, step_deg: 0.25, scan_rays: 40_000, ..Default::default() };
         let r = compute_scan(&bench, &beam, &model, &det, &scan);
         assert!(r.metrics.fwhm_deg > 3.0 && r.metrics.fwhm_deg < 12.0, "{}", r.metrics.fwhm_deg);
     }
@@ -515,9 +525,11 @@ mod tests {
         c.embedded_darkening = 0.0;
         let glossy = SampleModel::new(&SampleSettings { composite: c, ..Default::default() });
         let f = dielectric_fresnel(1.55, 30f64.to_radians().cos(), false);
-        let mirror = SampleModel::new(&SampleSettings { kind: SampleKind::Mirror, mirror_reflectance: f, ..Default::default() });
+        let mirror =
+            SampleModel::new(&SampleSettings { kind: SampleKind::Mirror, mirror_reflectance: f, ..Default::default() });
         let det = DetectorSettings::default();
-        let scan = ScanSettings { start_deg: 20.0, stop_deg: 40.0, step_deg: 1.0, scan_rays: 20_000, ..Default::default() };
+        let scan =
+            ScanSettings { start_deg: 20.0, stop_deg: 40.0, step_deg: 1.0, scan_rays: 20_000, ..Default::default() };
         let a = compute_scan(&bench, &beam, &glossy, &det, &scan);
         let b = compute_scan(&bench, &beam, &mirror, &det, &scan);
         let sa: f64 = a.power_mw.iter().sum();
