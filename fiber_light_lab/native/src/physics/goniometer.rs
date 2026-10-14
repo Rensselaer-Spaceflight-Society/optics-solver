@@ -250,6 +250,19 @@ pub struct ScanResult {
     pub detector_subsamples: usize,
 }
 
+impl ScanResult {
+    /// Photocurrent (mA) at the scan position nearest `angle_deg`, integrated
+    /// over each ray's wavelength with the responsivity curve.
+    pub fn current_at(&self, angle_deg: f64) -> f64 {
+        self.angle_deg
+            .iter()
+            .enumerate()
+            .min_by(|a, b| (a.1 - angle_deg).abs().total_cmp(&(b.1 - angle_deg).abs()))
+            .map(|(i, _)| self.current_ma[i])
+            .unwrap_or(0.0)
+    }
+}
+
 /// Angular half-width (deg) of the zone where the detector cannot go.
 pub fn blocked_zone(bench: &BenchSettings, det: &DetectorSettings) -> (f64, f64) {
     let center = -bench.incidence_deg;

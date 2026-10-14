@@ -421,7 +421,7 @@ fn s_near(r: &SimResult) -> f64 {
 
 fn metrics_grid(ui: &mut egui::Ui, r: &SimResult, compare: Option<&(String, ScanResult)>) {
     let m = &r.scan.metrics;
-    let resp = r.settings.detector.responsivity.eval(r.mean_wavelength_nm);
+    let peak_current_a = r.scan.current_at(r.scan.metrics.peak_angle_deg) * 1e-3;
     ui.horizontal_wrapped(|ui| {
         let chip = |ui: &mut egui::Ui, k: &str, v: String| {
             egui::Frame::group(ui.style()).show(ui, |ui| {
@@ -437,7 +437,7 @@ fn metrics_grid(ui: &mut egui::Ui, r: &SimResult, compare: Option<&(String, Scan
         chip(ui, "Peak", format!("{} at {:.1}°", si(m.peak_mw * 1e-3, "W"), m.peak_angle_deg));
         chip(ui, "Peak FWHM", if m.fwhm_deg > 0.0 { format!("{:.2}°", m.fwhm_deg) } else { "—".into() });
         chip(ui, "Mirror FWHM (instrument)", format!("{:.2}°", r.instrument.metrics.fwhm_deg));
-        chip(ui, "Peak photocurrent", si(m.peak_mw * 1e-3 * resp, "A"));
+        chip(ui, "Peak photocurrent", si(peak_current_a, "A"));
         if let Some((name, other)) = compare {
             chip(ui, &format!("Ratio, {name}"), format!("{:.3}", other.metrics.near_to_off_ratio));
         }

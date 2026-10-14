@@ -539,7 +539,7 @@ fn key_results(ui: &mut egui::Ui, r: &SimResult) {
     let t = &r.transport;
     let b = &r.beam.budget;
     let m = &r.scan.metrics;
-    let resp = r.settings.detector.responsivity.eval(r.mean_wavelength_nm);
+    let peak_current_a = r.scan.current_at(r.scan.metrics.peak_angle_deg) * 1e-3;
     let rows: Vec<(&str, String)> = vec![
         ("Fiber output", si(t.output_mw * 1e-3, "W")),
         (
@@ -553,7 +553,7 @@ fn key_results(ui: &mut egui::Ui, r: &SimResult) {
         ("Detector spans", format!("{:.2}°", r.settings.detector.angular_width_deg())),
         ("Specular angle", format!("{:.2}°", m.specular_angle_deg)),
         ("Peak signal", format!("{} at {:.1}°", si(m.peak_mw * 1e-3, "W"), m.peak_angle_deg)),
-        ("Peak photocurrent", si(m.peak_mw * 1e-3 * resp, "A")),
+        ("Peak photocurrent", si(peak_current_a, "A")),
         ("Near specular", si(m.near_mean_mw * 1e-3, "W")),
         ("Away from specular", si(m.off_mean_mw * 1e-3, "W")),
         ("Near / away", format!("{:.2}", m.near_to_off_ratio)),
