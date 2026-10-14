@@ -1,0 +1,18 @@
+{
+  "vendor": "Intel",
+  "renderer": "Intel(R) Iris(R) Xe Graphics",
+  "version": "4.6.0 - Build 31.0.101.4255",
+  "multisamples": 0,
+  "framebuffer_samples": 4,
+  "beam_view_pixels": [
+    547,
+    656
+  ],
+  "beam_rotation_draw_ms": 4.754,
+  "wave_rotation_draw_ms": 3.853,
+  "wave_chart_update_ms": 129.882,
+  "beam_calculation_ms": 0.047,
+  "coherent_calculation_ms": 0.049,
+  "halogen_calculation_ms": 0.032,
+  "timing_scope": "Warm-cache medians. Forced GL paint plus glFinish; excludes compositor, monitor refresh and input delivery. Rotation performs no physics or 2D redraw. CPU baseline used a 1200x720 full Matplotlib canvas; the new renderer isolates the 3D pane."
+}

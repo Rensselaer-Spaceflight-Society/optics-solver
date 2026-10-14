@@ -1,0 +1,14 @@
+{
+  "python": "3.13.2",
+  "output_mw": 0.7843244155491175,
+  "peak_W_per_m2": 0.2479172546480755,
+  "ninety_percent_diameter_mm": 68.40241350760382,
+  "relative_power_conservation_error": 2.220446049250313e-16,
+  "relative_peak_grid_change_257_to_513": 0.0001271102500830512,
+  "independent_ray_second_moment_relative_error": 0.00020014242611232635,
+  "coherent_contrast": 0.9944264101388512,
+  "averaged_64_contrast": 0.12101815906425988,
+  "footprint_first_ms": 74.43589996546507,
+  "footprint_cached_ms": 0.10549998842179775,
+  "limitations": "Numerical self-consistency checks; not experimental validation. See MODEL.md."
+}

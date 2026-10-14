@@ -1,0 +1,9 @@
+{
+  "beam_calculation_ms": 7.244,
+  "coherent_calculation_ms": 25.361,
+  "halogen_calculation_ms": 7.286,
+  "beam_rebuild_draw_ms": 736.22,
+  "beam_rotation_draw_ms": 276.983,
+  "wave_rebuild_draw_ms": 564.295,
+  "wave_rotation_draw_ms": 301.716
+}

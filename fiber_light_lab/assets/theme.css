@@ -1,0 +1,25 @@
+/* Dash 4 native controls share these semantic theme tokens. */
+.shell {
+  --Dash-Fill-Inverse-Strong: #15232d;
+  --Dash-Fill-Interactive-Strong: #e4b66f;
+  --Dash-Fill-Interactive-Weak: #263943;
+  --Dash-Fill-Primary-Hover: #263943;
+  --Dash-Fill-Primary-Active: #344c58;
+  --Dash-Fill-Disabled: #23323c;
+  --Dash-Text-Strong: #e1e9eb;
+  --Dash-Text-Primary: #c5d2d8;
+  --Dash-Text-Weak: #8ea6af;
+  --Dash-Text-Disabled: #70858f;
+  --Dash-Stroke-Weak: #2e414d;
+  --Dash-Stroke-Strong: #58747f;
+}
+.number-row .dash-input-container { display:flex; flex:1; min-width:0; width:100%; border:0; background:transparent; }
+.number-row .dash-input-element { display:block; flex:1; width:100%; min-width:0; height:39px; padding:8px 11px; text-align:left; color:var(--text); }
+.number-row .dash-input-stepper { display:none; }
+.sidebar .dash-dropdown { width:100%; margin:0; color:var(--text); background:#15232d; border:1px solid #334550; }
+.dash-slider-mark { color:var(--muted)!important; font-size:10px!important; }
+.dash-slider-range { background:var(--gold)!important; }
+.dash-slider-thumb { background:var(--gold)!important; border-color:var(--gold)!important; }
+.dash-slider-track { background:#32434e!important; }
+.toolbar .dash-options-list-option-text,.toolbar label { color:var(--text)!important; }
+.dash-dropdown-content { background:#15232d!important; color:#d8e2e5!important; }
