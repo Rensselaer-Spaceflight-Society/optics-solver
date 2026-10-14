@@ -1,6 +1,7 @@
 //! Small numerical toolkit: 3-vectors, interpolation, quadrature and
 //! deterministic random / low-discrepancy sequences. No external math crates.
 
+use serde::{Deserialize, Serialize};
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 
 pub const PI: f64 = std::f64::consts::PI;
@@ -124,7 +125,7 @@ impl Frame {
 }
 
 /// A tabulated curve with numpy.interp semantics (clamped at both ends).
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Curve {
     pub x: Vec<f64>,
     pub y: Vec<f64>,
