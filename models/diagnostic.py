@@ -1,12 +1,14 @@
 # file meant to carry your sensors, etc. stuff
 import numpy as np
 from models.elements import Element
+from uuid import uuid4
 
 class Diagnostic(Element):
     def __init__(self, position, rotation, name):
         super().__init__(position, rotation)
         self.data = []
         self.name = name
+        self.id = uuid4()
 
     def matrix(self, src):
         return np.eye(2), src.n
