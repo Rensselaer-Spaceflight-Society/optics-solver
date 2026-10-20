@@ -2,10 +2,12 @@ from models.space import CoordinateVector, UnOrderedRotation
 from models.sources import LightSource
 from typing import Callable, Union
 import numpy as np
+from uuid import uuid4
 #from archive.hull import LensHull
 
 #ELEMENT CLASSES
 class Element:
+    ends_arm = False# True -> no "through" beam (a mirror)
     def __init__(
             self,
             position: CoordinateVector,
@@ -13,6 +15,7 @@ class Element:
             # param_map,
             *params
         ):
+        self.id = uuid4()
         self.position = position
         self.rotation = rotation
         # self.hull = param_map(*params)
@@ -22,6 +25,7 @@ class Element:
 
     def transmission(self, src:LightSource):# generally no loss
         return 1.0
+
 
     def transfer(self, src: LightSource):
         src.power *= self.transmission(src)
@@ -58,4 +62,20 @@ class CircularLens(Element):
         if src.profile == "gaussian":
             return 1.0 - np.exp(-2 * a**2 / src.w**2)
         return min(1.0, a**2 / src.w**2)
-        
+
+# params are center, [lengths in each axis]
+# where the order of the lengths in each axis corresponds to the order of the coords in the position
+# in models/elements.py
+class MirrorElement(Element):
+    def __init__(self, position, rotation, reflectivity=1.0):
+        super().__init__(position, rotation)
+        self.reflectivity = reflectivity
+
+    def matrix(self, src):
+        return np.eye(2), src.n
+
+    def transmission(self, src):
+        return src.power * self.reflectivity
+
+    def normal(self):
+        return np.array(self.rotation.transform(CoordinateVector(3, 0.0, 0.0, 1.0)).coords)

@@ -27,18 +27,17 @@ example_position = CoordinateVector(3, 0, 0, 0)
 # EulerAngle extends CoordinateVector for rotation
 example_rotation = EulerAngle(3, 0, 0, 0)
 # create some generic box element
-example_element = Element(example_position, example_rotation, PMapBox, 1, 1, 1)
+example_element = Element(example_position, example_rotation, 1, 1, 1)
 
 # arg types are :
 #   position: CoordinateVector || children
 #   rotation: CoordinateVector || children
-#   ShapeMap: PMap || children
-#   *parameters for ShapeMap
+#   *parameters for whatever
 ```
-Elements will have some function within them that tells the incoming light from a given source how to behave after it passes through.
+Elements will have some function within them that tells the incoming light from a given source how to behave after it passes through. This will be done via a matrix multiplication (where a ray is represented by a 2x2), with gaussian beams it may become a little more complicated.
 
 ## Section 3: Sources/Stage/Diagnostics
-All of these have been lumped into one section because they essentiall serve similar purposes. The source would just be its own class that tells all the elements what's coming in (wavelength, power, coherence time, the works). In order to keep the source as simple as possible, if your source has some kind of initial divergence/aperture you would need to add the class `ApertureElement` to account for that.
+All of these have been lumped into one section because they essentially serve similar purposes. The source would just be its own class that tells all the elements what's coming in (wavelength, power, coherence time, the works). In order to keep the source as simple as possible, if your source has some kind of initial divergence/aperture you would need to add the class `ApertureElement` to account for that. 
 
 I mentioned the stage working for different coordinates, currently what's in the works is to add a metric function that defines distances and spatial behavior in the system. So for example, could add a class that extends `Stage` called `CurvilinearStage` or `SphericalStage` or even `HyperbolicStage` depending on how we want everything to work. Though a lot of it is generalizing and doesn't need real use.
 

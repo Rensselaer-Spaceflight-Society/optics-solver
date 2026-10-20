@@ -1,6 +1,9 @@
 from itertools import combinations
 import numpy as np
 
+# Note: I've kinda given up on generalizing N-dimensional coordinates, but with the base classes
+# it's possible to write your own but it doesn't end up being physically useful
+
 # COORDINATE CLASSES
 # generic n-dimensional coordinate vector -> useful if we need more generalized coordinates
 class CoordinateVector:
@@ -29,6 +32,9 @@ class CoordinateVector:
 
     def is_less_than_on_axis(self, other: CoordinateVector, axis: int) -> bool:
         return self.coords[axis] < other.coords[axis]
+
+    def proj(self, AXIS: CoordinateVector):
+        return np.dot(self.coords, AXIS.coords)
 
 
 
